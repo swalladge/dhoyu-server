@@ -9,6 +9,8 @@ name = "pypi"
 
 flask = "*"
 flask-sqlalchemy = "*"
+pyjwt = "*"
+passlib = "*"
 
 
 [dev-packages]

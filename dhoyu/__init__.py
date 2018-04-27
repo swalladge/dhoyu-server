@@ -33,6 +33,8 @@ def hello():
 db = SQLAlchemy(app)
 from . import models
 
+from . import api
+app.register_blueprint(api.bp)
 
 @click.command('init-db')
 def init_db_command():

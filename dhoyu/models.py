@@ -1,4 +1,6 @@
 
+from passlib.hash import pbkdf2_sha256
+
 from . import db
 
 # links between categories and games on that category
@@ -25,6 +27,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
     saved_games = db.relationship('Game', secondary=game_user_links, lazy='subquery',
             backref=db.backref('players', lazy=True))
@@ -32,8 +35,31 @@ class User(db.Model):
     saved_categories = db.relationship('Category', secondary=category_user_links, lazy='subquery',
             backref=db.backref('players', lazy=True))
 
+    created_games = db.relationship('Game', backref='author', lazy=True)
+    created_categories = db.relationship('Category', backref='author', lazy=True)
+
+    def __init__(self, username, password, admin=False):
+        self.username = username
+        self.password = User.hash_password(password)
+        self.is_admin = admin
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        return pbkdf2_sha256.hash(password)
+
+    def set_password(self, password):
+        self.password = User.hash_password(password)
+
+    def check_password(self, password: str) -> bool:
+        '''
+        checks password against own password hash
+        returns True if password correct, otherwise False
+        '''
+        return pbkdf2_sha256.verify(password, self.password)
+
     def __repr__(self):
         return '<User %r>' % self.username
+
 
 
 
@@ -44,7 +70,6 @@ class Image(db.Model):
     url = db.Column(db.String(512))
 
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
-    game = db.relationship('Game', back_populates='images')
 
     def __init__(self, url):
         self.url = url
@@ -60,7 +85,6 @@ class Audio(db.Model):
     url = db.Column(db.String(512))
 
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
-    game = db.relationship('Game', back_populates='audios')
 
     def __init__(self, url):
         self.url = url
@@ -75,11 +99,10 @@ class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     word = db.Column(db.String(128))
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    author = db.relationship('User', back_populates='created_games')
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    images = db.relationship('Image', order_by=Image.id, back_populates='game')
-    audios = db.relationship('Audio', order_by=Audio.id, back_populates='game')
+    images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
+    audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
 
     def __init__(self, word):
         self.word = word
@@ -95,7 +118,6 @@ class Category(db.Model):
     name = db.Column(db.String(128))
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    author = db.relationship('User', back_populates='created_categories')
 
     games = db.relationship('Game', secondary=category_game_links, lazy='subquery',
             backref=db.backref('categories', lazy=True))
