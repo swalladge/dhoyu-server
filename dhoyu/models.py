@@ -42,7 +42,7 @@ class User(db.Model):
 
     cards = db.relationship('Card', backref='user', lazy=True)
 
-    def __init__(self, username: str, password: str, admin: bool = False):
+    def __init__(self, username: str, password: str, admin: bool = False) -> None:
         self.username = username
         self.password = User.hash_password(password)
         self.is_admin = admin

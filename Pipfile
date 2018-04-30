@@ -16,3 +16,4 @@ passlib = "*"
 [dev-packages]
 
 python-dotenv = "*"
+mypy = "*"
