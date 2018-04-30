@@ -5,24 +5,26 @@ from . import db
 
 # links between categories and games on that category
 category_game_links = db.Table('category_game_links',
-    db.Column('game_id', db.Integer, db.ForeignKey('game.id'), primary_key=True),
-    db.Column('category_id', db.Integer, db.ForeignKey('category.id'), primary_key=True)
+    db.Column('game_id', db.Integer, db.ForeignKey('games.id'), primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True)
 )
 
 # links between categories and users that have saved that category
 category_user_links = db.Table('category_user_links',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('category_id', db.Integer, db.ForeignKey('category.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True)
 )
 
 # links between individual games and users that have saved those games
 game_user_links = db.Table('game_user_links',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('game_id', db.Integer, db.ForeignKey('game.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('game_id', db.Integer, db.ForeignKey('games.id'), primary_key=True)
 )
 
+
+
 class User(db.Model):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -38,7 +40,9 @@ class User(db.Model):
     created_games = db.relationship('Game', backref='author', lazy=True)
     created_categories = db.relationship('Category', backref='author', lazy=True)
 
-    def __init__(self, username, password, admin=False):
+    cards = db.relationship('Card', backref='user', lazy=True)
+
+    def __init__(self, username: str, password: str, admin: bool = False):
         self.username = username
         self.password = User.hash_password(password)
         self.is_admin = admin
@@ -47,7 +51,7 @@ class User(db.Model):
     def hash_password(password: str) -> str:
         return pbkdf2_sha256.hash(password)
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         self.password = User.hash_password(password)
 
     def check_password(self, password: str) -> bool:
@@ -58,20 +62,18 @@ class User(db.Model):
         return pbkdf2_sha256.verify(password, self.password)
 
     def __repr__(self):
-        return '<User %r>' % self.username
-
-
+        return 'User({!r})'.format(self.username)
 
 
 class Image(db.Model):
-    __tablename__ = 'game_image'
+    __tablename__ = 'game_images'
 
     id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(512))
+    url = db.Column(db.String(512), nullable=False)
 
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
 
     def __repr__(self):
@@ -79,14 +81,14 @@ class Image(db.Model):
 
 
 class Audio(db.Model):
-    __tablename__ = 'game_audio'
+    __tablename__ = 'game_audios'
 
     id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(512))
+    url = db.Column(db.String(512), nullable=False)
 
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
 
     def __repr__(self):
@@ -94,30 +96,31 @@ class Audio(db.Model):
 
 
 class Game(db.Model):
-    __tablename__ = 'game'
+    __tablename__ = 'games'
 
     id = db.Column(db.Integer, primary_key=True)
-    word = db.Column(db.String(128))
+    word = db.Column(db.String(128), nullable=False)
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
     audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
 
-    def __init__(self, word):
+    def __init__(self, word: str, author: User):
         self.word = word
+        self.author = author
 
     def __repr__(self):
-        return 'Game(word={!r})'.format(self.name, self.word)
+        return 'Game(word={!r})'.format(self.word)
 
 
 class Category(db.Model):
-    __tablename__ = 'category'
+    __tablename__ = 'categories'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128))
+    name = db.Column(db.String(128), nullable=False)
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     games = db.relationship('Game', secondary=category_game_links, lazy='subquery',
             backref=db.backref('categories', lazy=True))
@@ -131,3 +134,25 @@ class Category(db.Model):
 
     def add_game(self, game):
         game.course = self
+
+
+class Card(db.Model):
+    '''
+    Go-between to hold information about a game that a user is learning.
+    Holds information about the number of reviews, when due next, game/word
+    learnt status, etc.
+    '''
+    __tablename__ = 'cards'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    game = db.relationship('Game')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # TODO: include metadata about reviews for SRS purposes
+
+    def __init__(self, user: User, game: Game):
+        self.game = game
+        self.user = user
+
