@@ -1,3 +1,4 @@
+import datetime
 
 from passlib.hash import pbkdf2_sha256
 
@@ -30,6 +31,14 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    # scores updated by the server on game completion, game like, upload, etc.
+    # future work probably should have extra tables for recording all actions
+    # and calculate scores based on that
+    learner_score = db.Column(db.Integer, default=0, nullable=False)
+    creator_score = db.Column(db.Integer, default=0, nullable=False)
+    games_played = db.Column(db.Integer, default=0, nullable=False)
+    # games_uploaded can be calculated by count(games where game.author = user)
 
     saved_games = db.relationship('Game', secondary=game_user_links, lazy='subquery',
             backref=db.backref('players', lazy=True))
@@ -65,6 +74,8 @@ class User(db.Model):
         return 'User({!r})'.format(self.username)
 
 
+# NOTE: image and audio are 'owned' by the author of the game to which they are
+# attached
 class Image(db.Model):
     __tablename__ = 'game_images'
 
@@ -105,6 +116,7 @@ class Game(db.Model):
 
     images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
     audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
+    flags = db.relationship('Flag', backref='game', lazy=True)
 
     def __init__(self, word: str, author: User):
         self.word = word
@@ -156,3 +168,44 @@ class Card(db.Model):
         self.game = game
         self.user = user
 
+
+
+class Flag(db.Model):
+    '''
+    user report on a game
+    '''
+    __tablename__ = 'flags'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # allows a user to write info on why flagged if necessary
+    text = db.Column(db.String(512), default='', nullable=False)
+
+    # date of report
+    date = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+    def __init__(self, user: User, game: Game) -> None:
+        self.game = game
+        self.user = user
+
+
+class Like(db.Model):
+    '''
+    user likes/thumbsup/upvotes for games
+    '''
+    __tablename__ = 'likes'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # date of like
+    date = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+    def __init__(self, user: User, game: Game) -> None:
+        self.game = game
+        self.user = user
