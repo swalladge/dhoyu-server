@@ -25,7 +25,7 @@ except OSError:
 # register the db instance
 db = SQLAlchemy(app)
 
-from .models import User, Game, Card, Audio, Image, Category
+from .models import User, Game, Card, Audio, Image, Category, Language, Flag, Like
 
 from . import api
 app.register_blueprint(api.bp)
@@ -54,19 +54,21 @@ def demo_db_command():
     admin1 = User('username1', 'password', admin=True)
     user1 = User('username2', 'password')
 
+    kriol = Language('Kriol')
+
     # categories
-    cat1 = Category('Fruit', user1)
-    cat2 = Category('Random', user1)
+    cat1 = Category('Fruit', user1, kriol)
+    cat2 = Category('Random', user1, kriol)
 
 
     # some games
-    game1 = Game('epul', user1)
+    game1 = Game('epul', user1, kriol)
     game1.audios.append(Audio('https://upload.wikimedia.org/wikipedia/commons/9/9a/En-us-apple.ogg'))
     game1.images.append(Image('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Apple_red_delicius_flower_end.jpg/330px-Apple_red_delicius_flower_end.jpg'))
     game1.images.append(Image('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Honeycrisp.jpg/330px-Honeycrisp.jpg'))
     game1.images.append(Image('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Discovery_apples.jpg/180px-Discovery_apples.jpg'))
 
-    game2 = Game('binana', admin1)
+    game2 = Game('binana', admin1, kriol)
     game2.audios.append(Audio('https://upload.wikimedia.org/wikipedia/commons/6/61/En-us-banana.ogg'))
     game2.images.append(Image('https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Bananavarieties.jpg/330px-Bananavarieties.jpg'))
     game2.images.append(Image('https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Banana_farm_Chinawal.jpg/255px-Banana_farm_Chinawal.jpg'))

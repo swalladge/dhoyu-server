@@ -74,6 +74,22 @@ class User(db.Model):
         return 'User({!r})'.format(self.username)
 
 
+class Language(db.Model):
+    __tablename__ = 'languages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+
+    games = db.relationship('Game', backref='language', lazy=True)
+    categories = db.relationship('Category', backref='language', lazy=True)
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __repr__(self) -> str:
+        return 'Language({!r})'.format(self.name)
+
+
 # NOTE: image and audio are 'owned' by the author of the game to which they are
 # attached
 class Image(db.Model):
@@ -118,9 +134,12 @@ class Game(db.Model):
     audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
     flags = db.relationship('Flag', backref='game', lazy=True)
 
-    def __init__(self, word: str, author: User):
+    language_id = db.Column(db.Integer, db.ForeignKey('languages.id'), nullable=False)
+
+    def __init__(self, word: str, author: User, language: Language):
         self.word = word
         self.author = author
+        self.language = language
 
     def __repr__(self):
         return 'Game(word={!r})'.format(self.word)
@@ -137,9 +156,12 @@ class Category(db.Model):
     games = db.relationship('Game', secondary=category_game_links, lazy='subquery',
             backref=db.backref('categories', lazy=True))
 
-    def __init__(self, name, author):
+    language_id = db.Column(db.Integer, db.ForeignKey('languages.id'), nullable=False)
+
+    def __init__(self, name, author, language):
         self.name = name
         self.author = author
+        self.language = language
 
     def __repr__(self):
         return 'Course(name={!r})'.format(self.name)
