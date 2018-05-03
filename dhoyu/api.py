@@ -8,16 +8,17 @@ import jwt
 
 from .models import User
 from . import db, app
+from .decorators import token_required
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 @bp.route('/token', methods=('POST',))
 def get_token():
     data = request.json
+
     if data is None:
         abort(400)
 
-    print(request.json)
 
     username = request.json.get('username', None)
     password = request.json.get('password', None)
@@ -39,7 +40,7 @@ def get_token():
     expires = datetime.utcnow() + timedelta(weeks=1)
 
     token = jwt.encode({
-        'username': username,
+        'sub': username,
         'exp': expires,
         },
         app.config['SECRET_KEY'],
@@ -61,7 +62,6 @@ def register():
     if data is None:
         abort(400)
 
-    print(request.json)
 
     username = request.json.get('username', None)
     password = request.json.get('password', None)
@@ -73,6 +73,8 @@ def register():
         # TODO: helpful message
         abort(400)
 
+    # TODO: validate username only contains ascii alphanumeric plus `-`, `_`, etc.
+
     if User.query.filter_by(username=username).first():
         # username already exists
         abort(401)
@@ -82,3 +84,19 @@ def register():
     db.session.commit()
 
     return jsonify({'msg': 'success'})
+
+
+
+@bp.route('/user', methods=('GET',))
+@token_required
+def user_info():
+    return jsonify(g.user.get_info_dict())
+
+
+@bp.route('/user/<username>', methods=('GET',))
+@token_required
+def other_user_info(username):
+
+    user = User.query.filter_by(username=username).first_or_404()
+
+    return jsonify(user.get_info_dict())

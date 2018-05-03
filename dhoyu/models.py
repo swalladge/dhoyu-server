@@ -46,8 +46,8 @@ class User(db.Model):
     saved_categories = db.relationship('Category', secondary=category_user_links, lazy='subquery',
             backref=db.backref('players', lazy=True))
 
-    created_games = db.relationship('Game', backref='author', lazy=True)
-    created_categories = db.relationship('Category', backref='author', lazy=True)
+    created_games = db.relationship('Game', backref='author', lazy='dynamic')
+    created_categories = db.relationship('Category', backref='author', lazy='dynamic')
 
     cards = db.relationship('Card', backref='user', lazy=True)
 
@@ -73,6 +73,18 @@ class User(db.Model):
     def __repr__(self):
         return 'User({!r})'.format(self.username)
 
+    def get_info_dict(self):
+        print(type(self.created_games))
+        print(self.created_games)
+        return {
+            'username': self.username,
+            'is_admin': self.is_admin,
+            'games_played': self.games_played,
+            'games_created': self.created_games.count(),
+            'learner_score': self.learner_score,
+            'creator_score': self.creator_score,
+        }
+
 
 class Language(db.Model):
     __tablename__ = 'languages'
@@ -80,8 +92,8 @@ class Language(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
 
-    games = db.relationship('Game', backref='language', lazy=True)
-    categories = db.relationship('Category', backref='language', lazy=True)
+    games = db.relationship('Game', backref='language', lazy='dynamic')
+    categories = db.relationship('Category', backref='language', lazy='dynamic')
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -181,7 +193,7 @@ class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
-    game = db.relationship('Game')
+    game = db.relationship('Game', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     # TODO: include metadata about reviews for SRS purposes
