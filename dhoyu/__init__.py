@@ -1,4 +1,5 @@
 import os
+import sys
 
 import click
 from flask import Flask
@@ -11,15 +12,18 @@ app.config.from_mapping(
     SECRET_KEY='dev',
     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'db.sqlite3'),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    UPLOAD_IMAGES_FOLDER=os.path.join(app.instance_path, 'images/'),
 )
 
 app.config.from_pyfile('config.py', silent=True)
 
 # ensure the instance folder exists
 try:
-    os.makedirs(app.instance_path)
-except OSError:
-    pass
+    os.makedirs(app.instance_path, exist_ok=True)
+    os.makedirs(app.config['UPLOAD_IMAGES_FOLDER'], exist_ok=True)
+except OSError as e:
+    print(e)
+    sys.exit(1)
 
 
 # register the db instance

@@ -90,7 +90,9 @@ class Language(db.Model):
     __tablename__ = 'languages'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
+
+    # TODO: language id
 
     games = db.relationship('Game', backref='language', lazy='dynamic')
     categories = db.relationship('Category', backref='language', lazy='dynamic')
@@ -108,15 +110,18 @@ class Image(db.Model):
     __tablename__ = 'game_images'
 
     id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(512), nullable=False)
+
+    # can generate url from path
+    # XXX: needs to be different schema if hosting images on remote server
+    path = db.Column(db.String(512), nullable=False)
 
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
 
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, path: str):
+        self.path = path
 
     def __repr__(self):
-        return 'Image(url={!r})'.format(self.url)
+        return 'Image(name={!r})'.format(self.url)
 
 
 class Audio(db.Model):
@@ -142,16 +147,23 @@ class Game(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
+    public = db.Column(db.Boolean, default=False, nullable=False)
+
+    # whether the game has been finished editing by the user and ready to be
+    # played (if creating a game is a multistep process)
+    # ready = db.Column(db.Boolean, default=False, nullable=False)
+
     images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
     audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
     flags = db.relationship('Flag', backref='game', lazy=True)
 
     language_id = db.Column(db.Integer, db.ForeignKey('languages.id'), nullable=False)
 
-    def __init__(self, word: str, author: User, language: Language):
+    def __init__(self, word: str, author: User, language: Language, public: bool = False):
         self.word = word
         self.author = author
         self.language = language
+        self.public = public
 
     def __repr__(self):
         return 'Game(word={!r})'.format(self.word)
