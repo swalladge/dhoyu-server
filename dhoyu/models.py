@@ -91,13 +91,13 @@ class Language(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), unique=True, nullable=False)
-
-    # TODO: language id
+    code = db.Column(db.String(128), unique=True, nullable=False)
 
     games = db.relationship('Game', backref='language', lazy='dynamic')
     categories = db.relationship('Category', backref='language', lazy='dynamic')
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, code: str, name: str) -> None:
+        self.code = code
         self.name = name
 
     def __repr__(self) -> str:
@@ -110,15 +110,12 @@ class Image(db.Model):
     __tablename__ = 'game_images'
 
     id = db.Column(db.Integer, primary_key=True)
-
-    # can generate url from path
-    # XXX: needs to be different schema if hosting images on remote server
-    path = db.Column(db.String(512), nullable=False)
+    data = db.Column(db.Text, nullable=False)
 
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
 
-    def __init__(self, path: str):
-        self.path = path
+    def __init__(self, data: str):
+        self.data = data
 
     def __repr__(self):
         return 'Image(name={!r})'.format(self.url)
@@ -154,6 +151,7 @@ class Game(db.Model):
     # ready = db.Column(db.Boolean, default=False, nullable=False)
 
     images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
+    # TODO: consider making this a one-to-one relationship
     audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
     flags = db.relationship('Flag', backref='game', lazy=True)
 

@@ -75,6 +75,37 @@ send in body:
 response code will tell you if it worked
 
 
+### GET `/user`
+
+get your user details as json
+
+
+### GET `/usr/<username>`
+
+get json user details for `username`
+
+
+### GET `/games`
+
+get a json array of games (minimal information on each game for bandwidth
+saving)
+
+
+### POST `/games`
+
+create a new game
+
+TODO: stabilize and describe body format to send
+
+
+### GET `/games/<name>`
+
+get a game's data in json
+
+
+
+
+
 ## License
 
     Dhoyu Server

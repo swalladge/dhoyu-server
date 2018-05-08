@@ -3,6 +3,7 @@ import functools
 import json
 from datetime import datetime, timedelta
 import uuid
+from pprint import pprint as pp
 
 from flask import (abort, g, url_for, request, redirect, Blueprint, jsonify,
         send_from_directory)
@@ -123,62 +124,98 @@ def allowed_image_file(f) -> bool:
 @token_required
 def create_game():
 
-    images = request.files.getlist('images[]') # list of 0 or more FileStorage objects
+    # TODO: switch to base64 encoded image data and all inside json?
 
+    data = request.json
+    if data is None:
+        abort(400, 'invalid json data')
+
+    pp(data)
+
+    # json data shape example
+    # {
+    #   "images": [{
+    #     "data": "base64 encoded blob"
+    #   }],
+    #   "audio": {
+    #     "data": "base64 encoded blob"
+    #   },
+    #   "word": "epul",
+    #   "public": true,
+    #   "language": "rop", // language code
+
+
+    # retrieve and validate data
+
+    images = data.get('images', [])
+    if not isinstance(images, list):
+        abort(400, 'invalid images list')
 
     if len(images) > 4:
         abort(400, 'too many images (max 4)')
 
-    data = request.form.get('data')
-    try:
-        data = json.loads(data)
-    except Exception as e:
-        print(e)
-        abort(400, 'invalid json data in "data" attribute of formdata')
-
-    # ok let's do this
-
-    word = data.get('word')
-    if not word:
+    word = data.get('word', None)
+    if not isinstance(word, str) or not word:
         abort(400, '"word" empty or missing')
 
     public = bool(data.get('public', False))
 
+    audio = data.get('audio', None)
+    # TODO: validate and use audio
 
-    kriol = Language.query.filter_by(name='Kriol').first()
+    language = data.get('language', None)
+    if not isinstance(language, str) or not language:
+        abort(400, 'invalid or missing language code')
 
-    game = Game(word, g.user, kriol, public)
 
-    # TODO: images
+    # TODO: support more language codes - this isn't part of mvp though
+    SUPPORTED_LANGS = ['rop']
+    if language not in SUPPORTED_LANGS:
+        abort(400, 'unsupported language')
+
+    language = Language.query.filter_by(code=language).first()
+    game = Game(word, g.user, language, public)
 
     # validate stage
-    for f in images:
-        if not allowed_image_file(f):
+    for image in images:
+        if not isinstance(image, dict):
+            abort(400, 'invalid or rejected image')
+        image_data = image.get('data', None)
+        if not isinstance(image_data, str) or not image_data:
             abort(400, 'invalid or rejected image')
 
     # save stage
-    for f in images:
+    for image in images:
+        game.images.append(Image(image['data']))
 
-        # secure and generate random filename
-        filename = secure_filename(f.filename)
-        extension = filename.rsplit('.', 1)[1].lower()
-        filename = '{}.{}'.format(str(uuid.uuid4()), extension)
-
-        path = os.path.join(app.config['UPLOAD_IMAGES_FOLDER'], filename)
-        f.save(path)
-
-        image = Image(filename)
-        game.images.append(image)
-
+    game.language_id = language.id
 
     db.session.add(game)
     db.session.commit()
 
     return jsonify({
         'msg': 'success'
+    })
+
+
+@bp.route('/games', methods=('GET',))
+@token_required
+def list_games():
+
+    # TODO: return array of games with word and id/url
+
+    return jsonify({
+        'msg': 'success'
         })
 
 
-@bp.route('/images/<name>', methods=('GET',))
-def get_image(name: str):
-    return send_from_directory(app.config['UPLOAD_IMAGES_FOLDER'], name)
+
+@bp.route('/games/<name>', methods=('GET',))
+@token_required
+def get_game(name):
+
+    # TODO: get a game by name/id and return (with attached audio/images)
+
+    return jsonify({
+        'msg': 'success'
+        })
