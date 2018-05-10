@@ -74,8 +74,6 @@ class User(db.Model):
         return 'User({!r})'.format(self.username)
 
     def get_info_dict(self):
-        print(type(self.created_games))
-        print(self.created_games)
         return {
             'username': self.username,
             'is_admin': self.is_admin,

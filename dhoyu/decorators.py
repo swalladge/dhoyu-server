@@ -35,7 +35,7 @@ def token_required(f):
         except Exception as e:
             # invalid token
             # TODO: catch specific errors and return useful messages to client
-            print(e)
+            app.logger.error(e)
             abort(401)
 
 

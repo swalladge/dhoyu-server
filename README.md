@@ -104,6 +104,71 @@ get a game's data in json
 
 
 
+## Deploying
+
+Clone and install dependencies:
+
+```
+git clone git@github.com:swalladge/dhoyu-server.git
+cd dhoyu-server
+pipenv install
+```
+
+Install `gunicorn`
+
+```
+pipenv run pip install gunicorn
+```
+
+Add a `.env` file with the following contents:
+
+```
+!/bin/bash
+
+export FLASK_APP=dhoyu
+export FLASK_ENV=production
+```
+
+Init the database:
+
+```
+pipenv run flask db-up
+
+# or if you want demo data
+pipenv run flask db-demo
+```
+
+
+Configure:
+
+```
+mkdir instance
+vi instance/config.py
+```
+
+You'll want to at least add the `SECRET_KEY` config option there for security.
+Example contents (remember it must be valid python):
+
+```
+SECRET_KEY='asdfasdfasdf'
+SQLALCHEMY_ECHO=False
+```
+
+Run:
+
+```
+pipenv run gunicorn -w 4 -b 127.0.0.1:8000 dhoyu:app
+
+# or with fancy logging
+pipenv run gunicorn -w 4 -b 127.0.0.1:8000 --log-file debug.log --log-level DEBUG dhoyu:app
+```
+
+For convenience you will probably want that run line put into a service file or
+something so that it will automatically start on reboot.
+
+Finally, configure a reverse proxy such as nginx so it's accessible to the
+outside world.
+
 
 
 ## License

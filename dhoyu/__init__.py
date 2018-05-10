@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 import click
 from flask import Flask
@@ -13,17 +14,20 @@ app.config.from_mapping(
     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'db.sqlite3'),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     SQLALCHEMY_ECHO=True,
-    UPLOAD_IMAGES_FOLDER=os.path.join(app.instance_path, 'images/'),
 )
 
 app.config.from_pyfile('config.py', silent=True)
 
+if 'gunicorn' in os.environ.get('SERVER_SOFTWARE', ''):
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
 # ensure the instance folder exists
 try:
     os.makedirs(app.instance_path, exist_ok=True)
-    os.makedirs(app.config['UPLOAD_IMAGES_FOLDER'], exist_ok=True)
 except OSError as e:
-    print(e)
+    app.logger.error(e)
     sys.exit(1)
 
 
