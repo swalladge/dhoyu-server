@@ -11,6 +11,7 @@ flask = "*"
 flask-sqlalchemy = "*"
 pyjwt = "*"
 passlib = "*"
+python-dotenv = "*"
 
 
 [dev-packages]
