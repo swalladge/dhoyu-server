@@ -22,17 +22,28 @@ Canonical sources are available at the following urls:
 
 ## Development
 
-`./run.sh`
-
-or 
-
 ```
-export FLASK_APP=dhoyu
-export FLASK_ENV=development
-pipenv run flask <command>
+git clone git@github.com:swalladge/dhoyu-server.git
+cd dhoyu-server
+pipenv install
+pipenv install --dev
+
+# edit .env to add env vars (recommend those below:)
+# export FLASK_APP=dhoyu
+# export FLASK_ENV=development
+vi .env
+
+# init the database and insert demo data (see dhoyu/__init__.py for details)
+pipenv run flask db-demo
+
+# run the dev server!
+pipenv run flask run
+
+# run.sh for convenience - binds to all interfaces
+./run.sh
 ```
 
-- put a `config.py` in `instance/` for persistant local config
+Recommend putting a `config.py` in `instance/` for persistant local config.
 
 
 ## API
@@ -160,7 +171,10 @@ Run:
 pipenv run gunicorn -w 4 -b 127.0.0.1:8000 dhoyu:app
 
 # or with fancy logging
-pipenv run gunicorn -w 4 -b 127.0.0.1:8000 --log-file debug.log --log-level DEBUG dhoyu:app
+pipenv run gunicorn -w 4 -b 127.0.0.1:8000 \
+  --log-file debug.log --log-level DEBUG \
+  --access-logfile access.log \
+  dhoyu:app
 ```
 
 For convenience you will probably want that run line put into a service file or
