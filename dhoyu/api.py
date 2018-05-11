@@ -28,8 +28,11 @@ def get_token():
     username = request.json.get('username', None)
     password = request.json.get('password', None)
 
-    if not username or not password:
-        abort(401)
+    if not isinstance(username, str) or not username.strip() or not isinstance(password, str):
+        abort(401, 'invalid credential data provided')
+
+    # normalize
+    username = username.lower().strip()
 
     user = User.query.filter_by(username=username).first()
 
@@ -54,7 +57,6 @@ def get_token():
 
     return jsonify({
         'token': token.decode('utf-8'),
-        'expires': int(expires.timestamp()),
     })
 
 
@@ -69,8 +71,12 @@ def register():
     username = request.json.get('username', None)
     password = request.json.get('password', None)
 
-    if not username or not password:
-        abort(400)
+    if not isinstance(username, str) or not username.strip() or not isinstance(password, str):
+        # TODO: template for sending abort message in json
+        abort(401, 'invalid credential data provided')
+
+    # normalize
+    username = username.lower().strip()
 
     if len(username) > 30:
         # TODO: helpful message
