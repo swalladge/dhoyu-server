@@ -164,6 +164,32 @@ class Game(db.Model):
     def __repr__(self):
         return 'Game(word={!r})'.format(self.word)
 
+    def to_play_dict(self):
+        '''
+        returns a dictionary of all the data required for a normal user to play
+        the game
+        omits things only accessible by admins
+        '''
+        return {
+            'id': self.id,
+            'author': self.author.username,
+            'public': self.public,
+            'word': self.word,
+            'language': self.language.name,
+            'images': [
+                {
+                    'data': image.data
+                } for image in self.images
+            ],
+            # 'audios': [
+            #     {
+            #         }
+            #     for audio in self.audios
+            # ],
+            # TODO: use PMI to send word pieces as well
+            # TODO: work out whether the game type, etc. will be generated
+            # server or client side
+        }
 
 class Category(db.Model):
     __tablename__ = 'categories'

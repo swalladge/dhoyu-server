@@ -218,10 +218,11 @@ def list_games():
     })
 
 
-@bp.route('/games/<id>', methods=('GET', ))
+@bp.route('/games/<id_>', methods=('GET', ))
 @token_required
 def get_game(id_):
 
-    # TODO: get a game by name/id and return (with attached audio/images)
+    game = Game.query.filter_by(id=id_).filter(
+            db.or_(Game.public == True, Game.author == g.user)).first_or_404()
 
-    return jsonify({'msg': 'success'})
+    return jsonify(game.to_play_dict())
