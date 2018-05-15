@@ -14,6 +14,7 @@ import jwt
 from . import app, db
 from .decorators import token_required
 from .models import Game, Image, Language, User
+from .tools import get_card
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -226,3 +227,38 @@ def get_game(id_):
             db.or_(Game.public == True, Game.author == g.user)).first_or_404()
 
     return jsonify(game.to_play_dict())
+
+
+@bp.route('/play', methods=('POST', ))
+@token_required
+def log_play():
+
+    data = request.json
+    if data is None:
+        abort(400, 'invalid json data')
+
+    # json data shape example
+    # {
+    #   "id": "boring"
+    # }
+
+    # retrieve and validate data
+
+    game_id = data.get('id', None)
+    if not isinstance(game_id, str) or not game_id:
+        abort(400, 'invalid game id')
+
+    game = Game.query.filter_by(id=game_id).filter(
+            db.or_(Game.public == True, Game.author == g.user)).one_or_none()
+
+    if game is None:
+        abort(404)
+
+    card = get_card(g.user, game)
+
+
+    card.add_play()
+    db.session.add(card)
+    db.session.commit()
+
+    return jsonify({'msg': 'success'})

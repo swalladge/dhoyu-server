@@ -13,7 +13,7 @@ app.config.from_mapping(
     SECRET_KEY='dev',
     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'db.sqlite3'),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    SQLALCHEMY_ECHO=True,
+    # SQLALCHEMY_ECHO=True,
 )
 
 app.config.from_pyfile('config.py', silent=True)

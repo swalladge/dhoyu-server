@@ -110,6 +110,8 @@ class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.Text, nullable=False)
 
+    # TODO: need to store width, height, and mimetype
+
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
 
     def __init__(self, data: str):
@@ -117,6 +119,9 @@ class Image(db.Model):
 
     def __repr__(self):
         return 'Image(name={!r})'.format(self.url)
+
+    def get_data_uri(self):
+        return 'data:image/jpg;base64,{}'.format(self.data)
 
 
 class Audio(db.Model):
@@ -178,7 +183,8 @@ class Game(db.Model):
             'language': self.language.name,
             'images': [
                 {
-                    'data': image.data
+                    'id': image.id,
+                    'data': image.get_data_uri(),
                 } for image in self.images
             ],
             # 'audios': [
@@ -224,18 +230,21 @@ class Card(db.Model):
     '''
     __tablename__ = 'cards'
 
-    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), primary_key=True)
 
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
     game = db.relationship('Game', lazy=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    n_plays = db.Column(db.Integer, nullable=False, default=0)
 
     # TODO: include metadata about reviews for SRS purposes
 
-    def __init__(self, user: User, game: Game):
+    def __init__(self, user: User, game: Game) -> None:
         self.game = game
         self.user = user
+        self.n_plays = 0
 
+    def add_play(self) -> None:
+        self.n_plays += 1
 
 
 class Flag(db.Model):
