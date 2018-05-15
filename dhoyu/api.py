@@ -155,6 +155,11 @@ def create_game():
     if len(images) > 4:
         abort(400, 'too many images (max 4)')
 
+    if len(images) <= 0:
+        abort(400, 'at least one image must be supplied')
+
+    # TODO: (security) make sure image sizes aren't too big - possible DOS attack vector here?
+
     word = data.get('word', None)
     if not isinstance(word, str) or not word:
         abort(400, '"word" empty or missing')

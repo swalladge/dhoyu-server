@@ -121,6 +121,9 @@ class Image(db.Model):
     def __repr__(self):
         return 'Image(name={!r})'.format(self.url)
 
+    # XXX: this means jpg images only supported
+    # TODO: integrate pillow (or other image processing library) to auto
+    # detect these
     def get_data_uri(self):
         return 'data:image/jpg;base64,{}'.format(self.data)
 
