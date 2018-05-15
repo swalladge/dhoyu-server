@@ -103,3 +103,8 @@ venv.bak/
 
 
 # End of https://www.gitignore.io/api/python
+
+
+# resources dir
+# can't be distributed because copyright
+/res/*

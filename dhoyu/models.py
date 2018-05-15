@@ -1,8 +1,9 @@
 import datetime
+from random import shuffle
 
 from passlib.hash import pbkdf2_sha256
 
-from . import db
+from . import db, pmi
 
 # links between categories and games on that category
 category_game_links = db.Table('category_game_links',
@@ -174,7 +175,15 @@ class Game(db.Model):
         returns a dictionary of all the data required for a normal user to play
         the game
         omits things only accessible by admins
+        - note: assumes pmi based split word game - no option to configure this
+          yet
         '''
+
+        # use the pmi engine to segment the word
+        # XXX: hardcoded to Kriol and 0.4 threshold
+        pieces = pmi.segment(self.word, 'rop', 0.4)
+        shuffle(pieces)
+
         return {
             'id': self.id,
             'author': self.author.username,
@@ -187,14 +196,12 @@ class Game(db.Model):
                     'data': image.get_data_uri(),
                 } for image in self.images
             ],
+            'pieces': pieces,
             # 'audios': [
             #     {
             #         }
             #     for audio in self.audios
             # ],
-            # TODO: use PMI to send word pieces as well
-            # TODO: work out whether the game type, etc. will be generated
-            # server or client side
         }
 
 class Category(db.Model):

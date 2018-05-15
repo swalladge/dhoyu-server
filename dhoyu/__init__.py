@@ -6,6 +6,13 @@ import click
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from . import pmi
+
+
+# load the pmi engine
+with open('res/kriol.txt') as f:
+    pmi.init_pmi('rop', f)
+
 # create and configure the app
 app = Flask(__name__, instance_relative_config=True)
 
