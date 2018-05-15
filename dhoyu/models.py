@@ -77,7 +77,7 @@ class User(db.Model):
         return {
             'username': self.username,
             'is_admin': self.is_admin,
-            'games_played': self.games_played,
+            'n_plays': sum(map(lambda card: card.n_plays, self.cards)),
             'games_created': self.created_games.count(),
             'learner_score': self.learner_score,
             'creator_score': self.creator_score,
