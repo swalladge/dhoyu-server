@@ -67,6 +67,8 @@ def demo_db_command():
     reset_db()
 
     # some users, one being admin
+    # TODO: remove this for security reasons
+    # TODO: provide flask command to add a new admin/user
     admin1 = User('username1', 'password', admin=True)
     user1 = User('username2', 'password')
 

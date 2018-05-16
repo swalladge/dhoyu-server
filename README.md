@@ -83,23 +83,95 @@ send in body:
 }
 ```
 
-response code will tell you if it worked
+response:
+
+200 success
+
+```
+{
+  "msg": "success"
+}
+```
+
+400 fail
+
+### Authenticated methods below
+
+The next methods require authentication via a JWT (the one you obtained by
+posting to `/token`).
+This should be provided in the `Authorization` header like so:
+
+```
+Authorization: `Bearer mybase64.encoded.token`,
+```
+
+Example of implementing this with [axios](https://github.com/axios/axios):
+
+```
+// your JWT
+const token = 'some string';
+
+// configure an instance with the header
+const getAxiosAuthedInst = () => axios.create({
+  baseURL: API_ROOT,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+
+// perform an api call
+getAxiosAuthedInst().get('/user')...
+```
+
+See <https://jwt.io/> for more information on JSON Web Tokens.
 
 
 ### GET `/user`
 
-get your user details as json
+Get your user details as json.  JWT required.
+
+Example response:
+
+```
+{
+  "username": "john",
+  "is_admin": false,
+  "n_plays": 5,
+  "games_created": 1,
+  "learner_score": 25,
+  "creator_score": 10,
+}
+```
 
 
 ### GET `/usr/<username>`
 
-get json user details for `username`
+Get JSON user details for `username`.  JWT required.
+
+Example response:
+
+```
+{
+  "username": "john",
+  "is_admin": false,
+  "n_plays": 5,
+  "games_created": 1,
+  "learner_score": 25,
+  "creator_score": 10,
+}
+```
 
 
 ### GET `/games`
 
-get a json array of games (minimal information on each game for bandwidth
-saving)
+Get a JSON array of all games available to you (minimal information on each game
+for bandwidth saving).  JWT required.
+
+Future work may require adding pagination to this for scalability.
+
+Example response:
+
+TODO: everything below
 
 
 ### POST `/games`

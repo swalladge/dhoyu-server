@@ -74,7 +74,7 @@ def register():
 
     if not isinstance(username, str) or not username.strip() or not isinstance(password, str):
         # TODO: template for sending abort message in json
-        abort(401, 'invalid credential data provided')
+        abort(400, 'invalid credential data provided')
 
     # normalize
     username = username.lower().strip()
@@ -208,6 +208,7 @@ def create_game():
 def list_games():
 
     # union( public games, author's games)
+    # TODO: or user is admin
     games = Game.query.filter(db.or_(Game.public == True, Game.author == g.user))
 
     return jsonify({
@@ -228,6 +229,7 @@ def list_games():
 @token_required
 def get_game(id_):
 
+    # TODO: or user is admin
     game = Game.query.filter_by(id=id_).filter(
             db.or_(Game.public == True, Game.author == g.user)).first_or_404()
 
@@ -253,6 +255,7 @@ def log_play():
     if not isinstance(game_id, str) or not game_id:
         abort(400, 'invalid game id')
 
+    # TODO: or user is admin
     game = Game.query.filter_by(id=game_id).filter(
             db.or_(Game.public == True, Game.author == g.user)).one_or_none()
 
