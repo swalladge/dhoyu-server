@@ -20,11 +20,42 @@ Canonical sources are available at the following urls:
 - dhoyu-server: <https://github.com/swalladge/dhoyu-server>
 
 
+## Resource files
+
+The [PMI](https://en.wikipedia.org/wiki/Pointwise_mutual_information) based word
+segmentation algorithm requires training on a list of sample words in a
+language to work correctly. The MVP supports Kriol only, and attempts to load a
+list of kriol words from `res/kriol.txt`, where the list is formatted as
+plaintext with one word per line. Example file:
+
+```
+thred
+thri
+thribala
+thribalawei
+thridei
+```
+
+The production server loads from a file containing a list of 5000 kriol words,
+which is not distributed with the source code due to copyright concerns.
+
+Before running the server, please create a `kriol.txt` file in the `res`
+directory. The server should work even if it is empty, but for better word
+segmentation, as many Kriol words as possible should be entered into the file.
+
+
 ## Development
+
 
 ```
 git clone git@github.com:swalladge/dhoyu-server.git
 cd dhoyu-server
+
+# create the pmi resource file with at least one word
+# see above section for recommendations
+mkdir res
+echo 'word' > res/kriol.txt
+
 pipenv install
 pipenv install --dev
 

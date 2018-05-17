@@ -14,6 +14,8 @@ class PMI(object):
 
     def add_word(self, word):
 
+        word = word.lower().strip()
+
         # add the frequencies
         for letter in word:
             self.total += 1
@@ -39,6 +41,10 @@ class PMI(object):
         '''
         get pmi(x;y)
         '''
+
+        # normalize
+        x = x.lower()
+        y = y.lower()
 
         p_x = self.letter_freqs.get(x, 0) / self.total
         p_y = self.letter_freqs.get(y, 0) / self.total
@@ -70,7 +76,7 @@ def init_pmi(language, word_file_obj):
     pmi_machine = PMI()
 
     for word in word_file_obj:
-        pmi_machine.add_word(word.strip())
+        pmi_machine.add_word(word)
 
     PMIs[language] = pmi_machine
 
