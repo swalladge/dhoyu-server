@@ -218,8 +218,6 @@ def create_game():
 @token_required
 def list_games():
 
-    # union( public games, author's games)
-    # TODO: or user is admin
     games = Game.query.filter(db.or_(Game.public == True, Game.author == g.user))
 
     return jsonify({
@@ -229,7 +227,9 @@ def list_games():
                 'word': game.word,
                 'public': game.public,
                 'language': game.language.name,
-                # thumbnail in future?
+                'can_delete': g.user.is_admin or game.author == g.user,
+                # TODO: thumbnail in future?
+                # TODO: show flagged status if admin
             }
             for game in games
         ],
@@ -240,11 +240,42 @@ def list_games():
 @token_required
 def get_game(id_):
 
-    # TODO: or user is admin (return more information if admin)
     game = Game.query.filter_by(id=id_).filter(
             db.or_(Game.public == True, Game.author == g.user)).first_or_404()
 
-    return jsonify(game.to_play_dict())
+    data = {
+        'id': game.id,
+        'author': game.author.username,
+        'public': game.public,
+        'word': game.word,
+        'language': game.language.name,
+        'images': [
+            {
+                'id': image.id,
+                'data': image.get_data_uri(),
+            } for image in game.images
+        ],
+        'can_delete': False,
+        'pieces': game.get_segments(),
+        # 'audios': [
+        #     {
+        #         }
+        #     for audio in self.audios
+        # ],
+    }
+
+    if g.user.is_admin:
+        data['can_delete'] = True
+        data['flags'] = [{
+            'text': flag.text,
+            'user': flag.user.username,
+            'date': flag.date,
+        } for flag in game.flags]
+
+    if g.user == game.author:
+        data['can_delete'] = True
+
+    return jsonify(data)
 
 
 @bp.route('/play', methods=('POST', ))
@@ -281,3 +312,20 @@ def log_play():
     db.session.commit()
 
     return jsonify({'msg': 'success'})
+
+
+
+@bp.route('/games/<id_>', methods=('DELETE', ))
+@token_required
+def delete_game(id_):
+
+    # make sure we only find a game that the user can access
+    game = Game.query.filter_by(id=id_).filter(
+            db.or_(Game.public == True, Game.author == g.user)).first_or_404()
+
+    if g.user.is_admin or game.author == g.user:
+        db.session.delete(game)
+        db.session.commit()
+        return jsonify({'msg': 'successfully deleted'})
+    else:
+        abort(401, 'you are not allowed to delete this game')

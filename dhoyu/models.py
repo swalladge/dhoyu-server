@@ -75,6 +75,8 @@ class User(db.Model):
         return 'User({!r})'.format(self.username)
 
     def get_info_dict(self):
+        # NOTE: dynamically calculating these here is probably inefficient, and
+        # if games get deleted, the scores will go down. Works for now though
         plays = sum(map(lambda card: card.n_plays, self.cards))
         created = self.created_games.count()
 
@@ -167,10 +169,10 @@ class Game(db.Model):
     # played (if creating a game is a multistep process)
     # ready = db.Column(db.Boolean, default=False, nullable=False)
 
-    images = db.relationship('Image', order_by=Image.id, backref='game', lazy=True)
+    images = db.relationship('Image', cascade='all', order_by=Image.id, backref='game', lazy=True)
     # TODO: consider making this a one-to-one relationship
-    audios = db.relationship('Audio', order_by=Audio.id, backref='game', lazy=True)
-    flags = db.relationship('Flag', backref='game', lazy=True)
+    audios = db.relationship('Audio', cascade='all', order_by=Audio.id, backref='game', lazy=True)
+    flags = db.relationship('Flag', cascade='all', backref='game', lazy=True)
 
     language_id = db.Column(db.Integer, db.ForeignKey('languages.id'), nullable=False)
 
@@ -183,39 +185,13 @@ class Game(db.Model):
     def __repr__(self):
         return 'Game(word={!r})'.format(self.word)
 
-    def to_play_dict(self):
-        '''
-        returns a dictionary of all the data required for a normal user to play
-        the game
-        omits things only accessible by admins
-        - note: assumes pmi based split word game - no option to configure this
-          yet
-        '''
-
+    def get_segments(self, threshold: float = 0.4) -> list:
         # use the pmi engine to segment the word
-        # XXX: hardcoded to Kriol and 0.4 threshold
-        pieces = pmi.segment(self.word, 'rop', 0.4)
+        # XXX: hardcoded to Kriol
+        pieces = pmi.segment(self.word, 'rop', threshold)
         shuffle(pieces)
+        return pieces
 
-        return {
-            'id': self.id,
-            'author': self.author.username,
-            'public': self.public,
-            'word': self.word,
-            'language': self.language.name,
-            'images': [
-                {
-                    'id': image.id,
-                    'data': image.get_data_uri(),
-                } for image in self.images
-            ],
-            'pieces': pieces,
-            # 'audios': [
-            #     {
-            #         }
-            #     for audio in self.audios
-            # ],
-        }
 
 class Category(db.Model):
     __tablename__ = 'categories'

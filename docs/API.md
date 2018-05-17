@@ -162,12 +162,14 @@ Example response:
       "id": 1,
       "word": "epul",
       "public": true,
+      "can_delete": true,
       "language": "rop"
     },
     {
       "id": 2,
       "word": "binana",
       "public": true,
+      "can_delete": false,
       "language": "rop"
     }
   ]
@@ -221,7 +223,15 @@ Example responses:
           "data": "base64 data url",
       }
   ],
-  "pieces": ["na", "na", "bi"]
+  "pieces": ["na", "na", "bi"],
+  "can_delete": false,
+  "flags": [
+    {
+      "text": "spam flag :P",
+      "user": "user123",
+      "date": 150000000
+    }
+  ]
 }
 ```
 
