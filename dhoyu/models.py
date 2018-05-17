@@ -75,13 +75,23 @@ class User(db.Model):
         return 'User({!r})'.format(self.username)
 
     def get_info_dict(self):
+        plays = sum(map(lambda card: card.n_plays, self.cards))
+        created = self.created_games.count()
+
+        # 1 point every 2 plays,
+        learner_score = (plays // 2)
+
+        # 2 points every card created + sum(n_users who have played game for each game created)
+        n_cards = Card.query.join(Game).filter(Game.author_id == self.id).count()
+        creator_score = 2 * created + n_cards
+
         return {
             'username': self.username,
             'is_admin': self.is_admin,
-            'n_plays': sum(map(lambda card: card.n_plays, self.cards)),
-            'games_created': self.created_games.count(),
-            'learner_score': self.learner_score,
-            'creator_score': self.creator_score,
+            'n_plays': plays,
+            'games_created': created,
+            'learner_score': learner_score,
+            'creator_score': creator_score,
         }
 
 
