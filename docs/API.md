@@ -58,6 +58,17 @@ object with a `"msg"` as above. This can probably be safely ignored though.
 
 ## Endpoints
 
+Summary:
+
+- `/api/token` POST
+- `/api/register` POST
+- `/api/user` GET
+- `/api/user/<username>` GET
+- `/api/games` GET, POST
+- `/api/games/<id>` GET, DELETE
+- `/api/play` POST
+
+
 ### POST `/api/token`
 
 Use your username and password to get a JWT to use for other API requests.
@@ -235,6 +246,20 @@ Example responses:
 }
 ```
 
+- 404 game not found
+
+
+### DELETE `/api/games/<id>`
+
+Delete a game. JWT required.
+
+You can only delete a game if either you created the game, or you are an admin
+and the game is public.
+
+Example responses:
+
+- 200 success:
+- 401 not allowed to delete this game
 - 404 game not found
 
 
