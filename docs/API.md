@@ -1,60 +1,21 @@
-## API
+# API
 
-### POST `/token`
+## Notes
 
-Use your username and password to get a JWT to use for other API requests.
+- All api methods prefixed with `/api` for flexibility and support for future
+  expansion.
+- Everything must be JSON, both in request and response bodies. The only
+  exception may be when the server throws an error (oops).
 
+### JWT required endpoints
 
-send in body:
-
-```
-{
-  "username": "user",
-  "password": "qjknecawy"
-}
-```
-
-response:
+Some API calls require a JSON web token (JWT) for authentication. If one below
+is labelled "JWT required", then it requires authentication via a JWT (the one
+you obtained by posting to `/api/token`).  This should be provided in the
+`Authorization` header like so:
 
 ```
-{
-  "token": "base64.encoded.jwt"
-}
-```
-
-### POST `/register`
-
-Register a new user.
-
-send in body:
-
-```
-{
-  "username": "user",
-  "password": "qjknecawy"
-}
-```
-
-response:
-
-200 success
-
-```
-{
-  "msg": "success"
-}
-```
-
-400 fail
-
-### Authenticated methods below
-
-The next methods require authentication via a JWT (the one you obtained by
-posting to `/token`).
-This should be provided in the `Authorization` header like so:
-
-```
-Authorization: `Bearer mybase64.encoded.token`,
+Authorization: `Bearer base64.encoded.jwt`,
 ```
 
 Example of implementing this with [axios](https://github.com/axios/axios):
@@ -75,10 +36,77 @@ const getAxiosAuthedInst = () => axios.create({
 getAxiosAuthedInst().get('/user')...
 ```
 
-See <https://jwt.io/> for more information on JSON Web Tokens.
+See <https://jwt.io/> for more information on JWTs.
+
+If an invalid JWT is supplied, the server will return a 401 response code.
+
+### Common responses
+
+All error responses will return a JSON object with a `"msg"` key giving more
+information. For example:
+
+```
+{
+  "msg": "username too long"
+}
+```
+
+Additionally, for endpoints where a 200 success doesn't specify sending anything
+back, as for example the `/api/play` endpoint, it will at least return a JSON
+object with a `"msg"` as above. This can probably be safely ignored though.
 
 
-### GET `/user`
+## Endpoints
+
+### POST `/api/token`
+
+Use your username and password to get a JWT to use for other API requests.
+
+
+Example request body:
+
+```
+{
+  "username": "user",
+  "password": "qjknecawy"
+}
+```
+
+Example response:
+
+```
+{
+  "token": "base64.encoded.jwt"
+}
+```
+
+### POST `/api/register`
+
+Register a new user.
+
+Example request body:
+
+```
+{
+  "username": "neo",
+  "password": "qjknecawy"
+}
+```
+
+Example responses:
+
+- 200 success
+
+```
+{
+  "msg": "success"
+}
+```
+
+- 400 invalid data submitted, not registered
+
+
+### GET `/api/user`
 
 Get your user details as json.  JWT required.
 
@@ -96,11 +124,13 @@ Example response:
 ```
 
 
-### GET `/usr/<username>`
+### GET `/api/user/<username>`
 
 Get JSON user details for `username`.  JWT required.
 
-Example response:
+Example responses:
+
+- 200 success:
 
 ```
 {
@@ -113,8 +143,10 @@ Example response:
 }
 ```
 
+- 404 user not found
 
-### GET `/games`
+
+### GET `/api/games`
 
 Get a JSON array of all games available to you (minimal information on each game
 for bandwidth saving).  JWT required.
@@ -142,11 +174,11 @@ Example response:
 }
 ```
 
-### POST `/games`
+### POST `/api/games`
 
 Create a new game, with JSON data supplied in the request body. JWT required.
 
-example request body:
+Example request body:
 
 ```
 {
@@ -165,14 +197,16 @@ example request body:
 responses:
 
 - 200 success
-- 400 invalid data posted
+- 400 data invalid in some way (see response for msg)
 
 
-### GET `/games/<id>`
+### GET `/api/games/<id>`
 
 Get a single game's data in JSON. JWT required.
 
-Example 200 response:
+Example responses:
+
+- 200 success:
 
 ```
 {
@@ -191,13 +225,10 @@ Example 200 response:
 }
 ```
 
-
-404 if not found
-
+- 404 game not found
 
 
-
-### POST `/play`
+### POST `/api/play`
 
 Log a play/solve of a game. Data supplied in request body. JWT required.
 
@@ -209,7 +240,7 @@ Example request body:
 }
 ```
 
-responses:
+Exammple responses:
 
 - 200 successfully logged
 - 404 game not found

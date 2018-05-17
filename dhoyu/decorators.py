@@ -28,21 +28,20 @@ def token_required(f):
 
         if not token:
             # invalid or missing token header
-            abort(401)
+            abort(401, 'JWT is required and was not found')
 
         try:
             decoded = jwt.decode(token, app.config['SECRET_KEY'], algorithms='HS256')
         except Exception as e:
-            # invalid token
-            # TODO: catch specific errors and return useful messages to client
-            app.logger.error(e)
-            abort(401)
+            return abort(401, 'invalid JWT {}'.format(str(e)))
 
-
+        # from here it's a valid JWT.
+        # add these sanity checks in case it's an old jwt with a different
+        # format or the user has been deleted
         username = decoded.get('sub', None)
         if not username:
             # no username
-            abort(401)
+            abort(401, 'empty username')
 
         user = User.query.filter_by(username=username).first()
 
@@ -50,7 +49,7 @@ def token_required(f):
             g.user = user
         else:
             # user not found
-            abort(401)
+            abort(401, 'this username no longer exists')
 
         # if reached here, then g.user must be a valid User object
         return f(*args, **kwargs)

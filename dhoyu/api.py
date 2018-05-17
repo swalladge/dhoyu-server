@@ -8,6 +8,7 @@ from pprint import pprint as pp
 from flask import (Blueprint, abort, g, jsonify, redirect, request,
                    send_from_directory, url_for)
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 
 import jwt
 
@@ -16,15 +17,26 @@ from .decorators import token_required
 from .models import Game, Image, Language, User
 from .tools import get_card
 
+
 bp = Blueprint('api', __name__, url_prefix='/api')
 
+# this catches all HTTPExceptions, so we know it *should* have .description and
+# .code (hopefully). TODO: consider a new errorhandler for other exceptions in
+# future if required
+@bp.app_errorhandler(HTTPException)
+def error_handler(exception):
+    return jsonify({
+        'msg': exception.description,
+    }), exception.code
 
+
+# AKA login
 @bp.route('/token', methods=('POST', ))
 def get_token():
     data = request.json
 
     if data is None:
-        abort(400)
+        abort(400, 'no username and password supplied')
 
     username = request.json.get('username', None)
     password = request.json.get('password', None)
@@ -39,12 +51,12 @@ def get_token():
 
     # user doesn't exist
     if not user:
-        abort(401)
+        abort(401, 'invalid username or password')
 
     # check password
     if not user.check_password(password):
         # oops, was invalid :P
-        abort(401)
+        abort(401, 'invalid username or password')
 
     expires = datetime.utcnow() + timedelta(weeks=1)
 
@@ -67,27 +79,25 @@ def register():
     data = request.json
 
     if data is None:
-        abort(400)
+        abort(400, 'invalid json data')
 
     username = request.json.get('username', None)
     password = request.json.get('password', None)
 
     if not isinstance(username, str) or not username.strip() or not isinstance(password, str):
-        # TODO: template for sending abort message in json
         abort(400, 'invalid credential data provided')
 
     # normalize
     username = username.lower().strip()
 
     if len(username) > 30:
-        # TODO: helpful message
-        abort(400)
+        abort(400, 'username too long')
 
     # TODO: validate username only contains ascii alphanumeric plus `-`, `_`, etc.
 
     if User.query.filter_by(username=username).first():
         # username already exists
-        abort(401)
+        abort(401, 'sorry, this username is already taken')
 
     user = User(username, password)
     db.session.add(user)
@@ -199,6 +209,7 @@ def create_game():
     db.session.add(game)
     db.session.commit()
 
+    # TODO: return created game id
     return jsonify({'msg': 'success'})
 
 
@@ -229,7 +240,7 @@ def list_games():
 @token_required
 def get_game(id_):
 
-    # TODO: or user is admin
+    # TODO: or user is admin (return more information if admin)
     game = Game.query.filter_by(id=id_).filter(
             db.or_(Game.public == True, Game.author == g.user)).first_or_404()
 
@@ -260,7 +271,7 @@ def log_play():
             db.or_(Game.public == True, Game.author == g.user)).one_or_none()
 
     if game is None:
-        abort(404)
+        abort(404, 'game does not exist')
 
     card = get_card(g.user, game)
 
