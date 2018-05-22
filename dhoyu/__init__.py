@@ -46,6 +46,12 @@ from .models import User, Game, Card, Audio, Image, Category, Language, Flag, Li
 from . import api
 app.register_blueprint(api.bp)
 
+# TODO, XXX: below is here for demo/marking purposes only. DO NOT ENABLE IN PRODUCTION
+# put `export DEMO=` in .env to enable this
+if 'DEMO' in os.environ:
+    from . import demo_views
+    app.register_blueprint(demo_views.bp)
+
 @click.command('db-up')
 def init_db_command():
     db.create_all()
