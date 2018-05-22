@@ -2,7 +2,7 @@
 
 import sqlite3
 import os
-from flask import (Blueprint, abort, Response)
+from flask import (Blueprint, abort, Response, jsonify)
 from werkzeug.exceptions import HTTPException
 
 from . import app
