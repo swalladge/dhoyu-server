@@ -228,6 +228,7 @@ def list_games():
                 'public': game.public,
                 'language': game.language.name,
                 'can_delete': g.user.is_admin or game.author == g.user,
+                'author': game.author.username,
                 # TODO: thumbnail in future?
                 # TODO: show flagged status if admin
             }

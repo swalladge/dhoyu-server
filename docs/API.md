@@ -174,14 +174,16 @@ Example response:
       "word": "epul",
       "public": true,
       "can_delete": true,
-      "language": "rop"
+      "language": "rop",
+      "author": "username1"
     },
     {
       "id": 2,
       "word": "binana",
       "public": true,
       "can_delete": false,
-      "language": "rop"
+      "language": "rop",
+      "author": "username2"
     }
   ]
 }
